@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UM5 Chatbot - Démonstration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            margin-top: 8px;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge.intent { background: #28a745; color: white; }
+        .badge.rag { background: #17a2b8; color: white; }
+        .badge.fallback { background: #ffc107; color: #333; }
+
+        .input-container {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #sendBtn {
+            padding: 15px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:active {
+            transform: translateY(0);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #e0e0e0;
+            width: fit-content;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-indicator span {
+            height: 10px;
+            width: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .welcome-message h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .quick-question {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .quick-question:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .sources {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .sources-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .source-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .source-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+
+            .chat-container {
+                height: 400px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎓 Chatbot UM5</h1>
+            <p>Assistant Intelligent - Architecture Hybride</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="accuracy">89.7%</div>
+                <div class="stat-label">Précision</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgLatency">180ms</div>
+                <div class="stat-label">Latence Moy.</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalQueries">0</div>
+                <div class="stat-label">Questions</div>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <h2>👋 Bienvenue !</h2>
+                <p>Je suis l'assistant virtuel de l'Université Mohammed V.</p>
+                <p>Posez-moi vos questions sur :</p>
+                <div class="quick-questions">
+                    <div class="quick-question" onclick="sendQuickQuestion(this)">📝 Inscription</div>
+                    <div class="quick-question" onclick="sendQuickQuestion(this)">💰 Bourses</div>
+                    <div class="quick-question" onclick="sendQuickQuestion(this)">📚 Bibliothèque</div>
+                    <div class="quick-question" onclick="sendQuickQuestion(this)">🗓️ Emploi du temps</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Input -->
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Posez votre question..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button id="sendBtn" onclick="sendMessage()">Envoyer</button>
+        </div>
+    </div>
+
+    <script>
+        let totalQueries = 0;
+        let totalLatency = 0;
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Clear welcome message
+            const welcome = document.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Disable input
+            setLoading(true);
+
+            try {
+                // Call API
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // Add bot response
+                addMessage(
+                    data.answer, 
+                    'bot', 
+                    {
+                        method: data.method,
+                        confidence: data.confidence,
+                        intent: data.intent,
+                        latency: data.latency_ms,
+                        sources: data.sources
+                    }
+                );
+
+                // Update stats
+                updateStats(data.latency_ms);
+
+            } catch (error) {
+                addMessage(
+                    "❌ Erreur : Impossible de contacter le serveur. Vérifiez que l'API est démarrée.",
+                    'bot'
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function addMessage(text, sender, meta = null) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Format text (preserve line breaks)
+            contentDiv.innerHTML = text.replace(/\n/g, '<br>');
+
+            if (meta && sender === 'bot') {
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'message-meta';
+                
+                const methodBadge = document.createElement('span');
+                methodBadge.className = `badge ${meta.method.split('_')[0]}`;
+                methodBadge.textContent = meta.method === 'intent_classification' ? 'Intent' : 
+                                         meta.method === 'rag_retrieval' ? 'RAG' : 'Fallback';
+                
+                const latency = document.createElement('span');
+                latency.textContent = `⚡ ${Math.round(meta.latency)}ms`;
+                
+                const confidence = document.createElement('span');
+                confidence.textContent = `📊 ${(meta.confidence * 100).toFixed(1)}%`;
+
+                metaDiv.appendChild(methodBadge);
+                metaDiv.appendChild(latency);
+                metaDiv.appendChild(confidence);
+
+                contentDiv.appendChild(metaDiv);
+
+                // Add sources if available
+                if (meta.sources && meta.sources.length > 0) {
+                    const sourcesDiv = document.createElement('div');
+                    sourcesDiv.className = 'sources';
+                    sourcesDiv.innerHTML = '<div class="sources-title">📚 Sources similaires:</div>';
+                    
+                    meta.sources.slice(0, 2).forEach(source => {
+                        const sourceItem = document.createElement('div');
+                        sourceItem.className = 'source-item';
+                        sourceItem.innerHTML = `
+                            <strong>Q:</strong> ${source.question.substring(0, 60)}...
+                            <br><small>Similarité: ${(source.similarity * 100).toFixed(1)}%</small>
+                        `;
+                        sourcesDiv.appendChild(sourceItem);
+                    });
+                    
+                    contentDiv.appendChild(sourcesDiv);
+                }
+            }
+
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function setLoading(loading) {
+            const input = document.getElementById('userInput');
+            const button = document.getElementById('sendBtn');
+            const indicator = document.getElementById('typingIndicator');
+
+            input.disabled = loading;
+            button.disabled = loading;
+
+            if (loading) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+
+        function updateStats(latency) {
+            totalQueries++;
+            totalLatency += latency;
+            
+            document.getElementById('totalQueries').textContent = totalQueries;
+            document.getElementById('avgLatency').textContent = 
+                `${Math.round(totalLatency / totalQueries)}ms`;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendQuickQuestion(element) {
+            const questions = {
+                '📝 Inscription': "Comment puis-je m'inscrire à l'UM5 ?",
+                '💰 Bourses': "Quelles sont les bourses disponibles ?",
+                '📚 Bibliothèque': "Quels sont les horaires de la bibliothèque ?",
+                '🗓️ Emploi du temps': "Comment consulter mon emploi du temps ?"
+            };
+
+            const input = document.getElementById('userInput');
+            input.value = questions[element.textContent];
+            sendMessage();
+        }
+
+        // Check server health on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                console.log('✅ Server Status:', data);
+            } catch (error) {
+                console.error('❌ Server not responding');
+            }
+        });
+    </script>
+</body>
+</html>
